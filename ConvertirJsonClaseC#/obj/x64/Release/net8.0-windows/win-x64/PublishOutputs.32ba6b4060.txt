@@ -1,0 +1,3 @@
+C:\Proyectos\Publicaciones\VSDoc\ConvertirJsonClaseC.pdb
+C:\Proyectos\Publicaciones\VSDoc\appsettings.json
+C:\Proyectos\Publicaciones\VSDoc\ConvertirJsonClaseC.exe
