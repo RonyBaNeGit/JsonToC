@@ -159,5 +159,120 @@ namespace ConvertirJsonClaseC_.Core
             var parts = s.Split(new[] { '_', '-', ' ', '.' }, StringSplitOptions.RemoveEmptyEntries);
             return string.Concat(parts.Select(p => char.ToUpperInvariant(p[0]) + p.Substring(1)));
         }
+
+        public static SqlTableInfo ParseTableInfo(string sql, string? defaultSchema = "dbo")
+        {
+            if (string.IsNullOrWhiteSpace(sql))
+                throw new ArgumentException("El SQL está vacío.", nameof(sql));
+
+            // Reutilizamos la misma limpieza de comentarios que ya hicimos en ParseCreateTable
+            var withoutComments = Regex.Replace(sql, @"--.*?$", "", RegexOptions.Multiline);
+
+            var normalized = withoutComments.Replace("\r", " ").Replace("\n", " ");
+            normalized = Regex.Replace(normalized, @"\s+", " ");
+
+            var m = Regex.Match(normalized, @"create\s+table\s+([^\(\s]+)\s*\(", RegexOptions.IgnoreCase);
+            if (!m.Success)
+                throw new InvalidOperationException("No se encontró un CREATE TABLE válido.");
+
+            var fullTableName = m.Groups[1].Value.Trim();
+
+            var tableNameOnly = GetTableNameOnly(fullTableName); // ya existe en tu clase
+            var schema = defaultSchema ?? "dbo";
+
+            // Si viene algo como dbo.[Usuario] o [dbo].[Usuario]
+            var cleaned = fullTableName.Replace("[", "").Replace("]", "");
+            var parts = cleaned.Split('.');
+            if (parts.Length == 2)
+            {
+                schema = string.IsNullOrWhiteSpace(parts[0]) ? schema : parts[0];
+                tableNameOnly = parts[1];
+            }
+
+            int start = normalized.IndexOf('(', m.Index + m.Length - 1);
+            int end = normalized.LastIndexOf(')');
+            if (start < 0 || end <= start)
+                throw new InvalidOperationException("No se pudo extraer la definición de columnas.");
+
+            var body = normalized.Substring(start + 1, end - start - 1);
+
+            var columnsRaw = SplitColumns(body); // ya existe en tu clase
+            var cols = new List<SqlColumnInfo>();
+
+            foreach (var col in columnsRaw)
+            {
+                var line = col.Trim();
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
+
+                var lower = line.ToLowerInvariant();
+
+                // Saltar constraints
+                if (_constraintStarters.Any(x => lower.StartsWith(x)))
+                    continue;
+
+                if (lower.StartsWith("--"))
+                    continue;
+
+                // nombre + resto
+                int firstSpace = line.IndexOf(' ');
+                if (firstSpace <= 0)
+                    continue;
+
+                var rawName = line.Substring(0, firstSpace);
+                var rest = line.Substring(firstSpace + 1).Trim();
+                if (string.IsNullOrWhiteSpace(rest))
+                    continue;
+
+                var colName = CleanName(rawName);
+                if (string.IsNullOrWhiteSpace(colName))
+                    continue;
+
+                // tipo SQL = primer token del resto (VARCHAR(100), INT, etc.)
+                var restParts = rest.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                if (restParts.Length == 0)
+                    continue;
+
+                var sqlType = restParts[0]; // incluye (n) si lo hay
+
+                var lowerRest = rest.ToLowerInvariant();
+                var isNullable = !lowerRest.Contains(" not null");
+                var isIdentity = lowerRest.Contains(" identity");
+                var isPk = lowerRest.Contains(" primary key");
+
+                cols.Add(new SqlColumnInfo
+                {
+                    Name = colName,
+                    SqlType = sqlType,
+                    IsNullable = isNullable,
+                    IsIdentity = isIdentity,
+                    IsPrimaryKey = isPk
+                });
+            }
+
+            return new SqlTableInfo
+            {
+                Schema = schema,
+                TableName = tableNameOnly,
+                Columns = cols
+            };
+        }
+
+
+        public class SqlColumnInfo
+        {
+            public string Name { get; set; } = string.Empty;
+            public string SqlType { get; set; } = string.Empty;
+            public bool IsNullable { get; set; }
+            public bool IsPrimaryKey { get; set; }
+            public bool IsIdentity { get; set; }
+        }
+
+        public class SqlTableInfo
+        {
+            public string Schema { get; set; } = "dbo";
+            public string TableName { get; set; } = string.Empty;
+            public List<SqlColumnInfo> Columns { get; set; } = new();
+        }
     }
 }

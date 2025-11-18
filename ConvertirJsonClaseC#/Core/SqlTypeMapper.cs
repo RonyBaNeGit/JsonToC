@@ -52,7 +52,7 @@ namespace ConvertirJsonClaseC_.Core
         public static string CSharpToSql(string csType, bool isNullable)
         {
             if (string.IsNullOrWhiteSpace(csType))
-                return "NVARCHAR(MAX)";
+                return "VARCHAR(100) NOT NULL";
 
             var t = csType.Trim();
 
@@ -76,17 +76,13 @@ namespace ConvertirJsonClaseC_.Core
                 "datetime" => "DATETIME2",
                 "guid" => "UNIQUEIDENTIFIER",
                 "byte[]" => "VARBINARY(MAX)",
-                "string" => "NVARCHAR(MAX)",
-                _ => "NVARCHAR(MAX)"
+                "string" => "VARCHAR(100)",   // 👈 CAMBIO IMPORTANTE
+                _ => "VARCHAR(100)"
             };
 
-            // Para decidir NULL/NOT NULL usamos:
-            // - Nullable value type (int?) -> NULL
-            // - string/byte[] -> NULL por defecto
-            bool nullableByType = (csType.EndsWith("?") || csType == "string" || csType == "string?" || csType == "byte[]" || csType == "byte[]?");
-            bool finalNullable = isNullable || nullableByType;
-
-            return sqlType + (finalNullable ? " NULL" : " NOT NULL");
+            // Queremos que TODO salga NOT NULL por defecto
+            return sqlType + " NOT NULL";
         }
+
     }
 }

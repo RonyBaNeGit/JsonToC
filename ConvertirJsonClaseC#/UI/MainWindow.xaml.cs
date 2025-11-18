@@ -834,6 +834,56 @@ namespace ConvertirJsonClaseC_.UI
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
+        private void BtnGenerateCrudSp_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var sql = CrudCreateInputTextBox.Text;
+                if (string.IsNullOrWhiteSpace(sql))
+                {
+                    MessageBox.Show("Proporciona un script CREATE TABLE.",
+                                    "Validación",
+                                    MessageBoxButton.OK,
+                                    MessageBoxImage.Warning);
+                    return;
+                }
+
+                SetBusy("Generando procedimientos almacenados CRUD…", true);
+                CrudSpOutputTextBox.Clear();
+
+                var script = SqlCrudGenerator.GenerateCrudFromCreateTable(sql, "dbo");
+
+                CrudSpOutputTextBox.Text = script;
+            }
+            catch (Exception ex)
+            {
+                CrudSpOutputTextBox.Text = $"-- Error: {ex.Message}\r\n-- {ex}";
+            }
+            finally
+            {
+                SetBusy("Procesando…", false);
+            }
+        }
+
+        private void BtnCopyCrudSp_Click(object sender, RoutedEventArgs e)
+        {
+            var text = CrudSpOutputTextBox.Text;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                MessageBox.Show("No hay script de procedimientos para copiar.",
+                                "Aviso",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Information);
+                return;
+            }
+
+            Clipboard.SetText(text);
+            MessageBox.Show("Procedimientos almacenados copiados al portapapeles.",
+                            "Listo",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
+        }
+
 
 
 

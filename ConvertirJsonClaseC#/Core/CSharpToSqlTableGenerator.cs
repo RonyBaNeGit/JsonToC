@@ -13,37 +13,53 @@ namespace ConvertirJsonClaseC_.Core
         /// Usa un mapeo simple C# -> SQL Server.
         /// </summary>
         public static string GenerateCreateTable(
-            Dictionary<string, CsClassInfo> classes,
-            string className,
-            string schema = "dbo")
+              Dictionary<string, CsClassInfo> classes,
+              string rootClassName,
+              string schema = "dbo")
         {
-            if (!classes.TryGetValue(className, out var cls))
-                throw new InvalidOperationException($"No se encontró la clase '{className}'.");
+            if (!classes.TryGetValue(rootClassName, out var root))
+                throw new InvalidOperationException($"No se encontró la clase raíz '{rootClassName}'.");
+
+            if (root.Properties.Count == 0)
+                throw new InvalidOperationException("La clase raíz no tiene propiedades públicas.");
 
             var sb = new StringBuilder();
 
-            var tableName = className; // podrías aplicar diferente naming convention aquí
-            sb.AppendLine($"CREATE TABLE [{schema}].[{tableName}]");
+            var finalSchema = string.IsNullOrWhiteSpace(schema) ? "dbo" : schema;
+            var tableName = root.Name;
+            var fullTableName = $"[{finalSchema}].[{tableName}]";
+
+            sb.AppendLine($"CREATE TABLE {fullTableName}");
             sb.AppendLine("(");
 
-            var props = cls.Properties.ToList();
+            bool identityAssigned = false;
+            int index = 0;
 
-            for (int i = 0; i < props.Count; i++)
+            foreach (var kv in root.Properties)
             {
-                var kv = props[i];
                 var propName = kv.Key;
                 var csType = kv.Value;
 
-                bool isNullable = csType.EndsWith("?", StringComparison.Ordinal);
+                // Usamos el mapper que ya modificamos (VARCHAR(100) y NOT NULL)
+                var baseSqlType = SqlTypeMapper.CSharpToSql(csType, isNullable: false);
 
-                var sqlType = SqlTypeMapper.CSharpToSql(csType, isNullable);
+                var line = new StringBuilder();
+                line.Append("    [").Append(propName).Append("] ").Append(baseSqlType);
 
-                sb.Append($"    [{propName}] {sqlType}");
+                // Regla: primer campo llamado Id/ID -> IDENTITY(1,1) UNIQUE
+                if (!identityAssigned &&
+                    string.Equals(propName, "Id", StringComparison.OrdinalIgnoreCase))
+                {
+                    line.Append(" IDENTITY(1,1) PRIMARY KEY UNIQUE");
+                    identityAssigned = true;
+                }
 
-                if (i < props.Count - 1)
-                    sb.Append(",");
+                // coma si no es la última columna
+                if (index < root.Properties.Count - 1)
+                    line.Append(",");
 
-                sb.AppendLine();
+                sb.AppendLine(line.ToString());
+                index++;
             }
 
             sb.AppendLine(");");
