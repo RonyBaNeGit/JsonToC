@@ -1,0 +1,21 @@
+{
+  "ClassDescriptions": {
+    "Prueba": "Representa una entidad de dominio que encapsula y gestiona datos estructurados provenientes de fuentes JSON.",
+    "Usuario": "Contiene la informaci\u00F3n b\u00E1sica de un usuario."
+  },
+  "PropertyDescriptions": {
+    "Prueba.Username": "Obtiene o establece el nombre de usuario utilizado para la autenticaci\u00F3n en el sistema.",
+    "Prueba.Age": "Obtiene o establece la edad en a\u00F1os como un valor num\u00E9rico entero largo.",
+    "Usuario.Id": "Obtiene o establece el identificador \u00FAnico de la entidad.",
+    "Usuario.Edad": "Obtiene o establece la edad de la persona expresada en a\u00F1os.",
+    "Usuario.Email": "Obtiene o establece la direcci\u00F3n de correo electr\u00F3nico del usuario.",
+    "Usuario.Nombre": "Obtiene o establece el nombre del elemento."
+  },
+  "GenericPropertyDescriptions": {
+    "Username": "Nombre del usuario..",
+    "Age": "Edad de la persona expresada en a\u00F1os.",
+    "Id": "Identificador unico de la entidad.",
+    "Edad": "Edad de la persona expresada en a\u00F1os.",
+    "Email": "Direcci\u00F3n de correo electr\u00F3nico del usuario."
+  }
+}
