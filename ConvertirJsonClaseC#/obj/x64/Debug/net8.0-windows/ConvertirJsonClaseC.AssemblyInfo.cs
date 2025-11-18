@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ConvertirJsonClaseC")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+92262ff2ec23a9306051d24524699e677b9aa219")]
 [assembly: System.Reflection.AssemblyProductAttribute("ConvertirJsonClaseC")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ConvertirJsonClaseC")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

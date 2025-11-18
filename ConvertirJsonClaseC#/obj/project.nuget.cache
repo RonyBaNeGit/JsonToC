@@ -1,15 +1,15 @@
 {
   "version": 2,
-  "dgSpecHash": "1GIWUNglTQY=",
+  "dgSpecHash": "bOre7dYZs68=",
   "success": true,
-  "projectFilePath": "C:\\Users\\banr25734\\Desktop\\ConvertirJsonClaseC#\\ConvertirJsonClaseC#\\ConvertirJsonClaseC.csproj",
+  "projectFilePath": "C:\\Users\\rbarr\\Desktop\\ProyectosNuevos\\Proyecto herramienta\\JsonToC\\ConvertirJsonClaseC#\\ConvertirJsonClaseC.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\banr25734\\.nuget\\packages\\microsoft.codeanalysis.analyzers\\3.3.4\\microsoft.codeanalysis.analyzers.3.3.4.nupkg.sha512",
-    "C:\\Users\\banr25734\\.nuget\\packages\\microsoft.codeanalysis.common\\4.10.0\\microsoft.codeanalysis.common.4.10.0.nupkg.sha512",
-    "C:\\Users\\banr25734\\.nuget\\packages\\microsoft.codeanalysis.csharp\\4.10.0\\microsoft.codeanalysis.csharp.4.10.0.nupkg.sha512",
-    "C:\\Users\\banr25734\\.nuget\\packages\\system.collections.immutable\\8.0.0\\system.collections.immutable.8.0.0.nupkg.sha512",
-    "C:\\Users\\banr25734\\.nuget\\packages\\system.reflection.metadata\\8.0.0\\system.reflection.metadata.8.0.0.nupkg.sha512",
-    "C:\\Users\\banr25734\\.nuget\\packages\\system.text.json\\8.0.6\\system.text.json.8.0.6.nupkg.sha512"
+    "C:\\Users\\rbarr\\.nuget\\packages\\microsoft.codeanalysis.analyzers\\3.3.4\\microsoft.codeanalysis.analyzers.3.3.4.nupkg.sha512",
+    "C:\\Users\\rbarr\\.nuget\\packages\\microsoft.codeanalysis.common\\4.10.0\\microsoft.codeanalysis.common.4.10.0.nupkg.sha512",
+    "C:\\Users\\rbarr\\.nuget\\packages\\microsoft.codeanalysis.csharp\\4.10.0\\microsoft.codeanalysis.csharp.4.10.0.nupkg.sha512",
+    "C:\\Users\\rbarr\\.nuget\\packages\\system.collections.immutable\\8.0.0\\system.collections.immutable.8.0.0.nupkg.sha512",
+    "C:\\Users\\rbarr\\.nuget\\packages\\system.reflection.metadata\\8.0.0\\system.reflection.metadata.8.0.0.nupkg.sha512",
+    "C:\\Users\\rbarr\\.nuget\\packages\\system.text.json\\8.0.6\\system.text.json.8.0.6.nupkg.sha512"
   ],
   "logs": []
 }

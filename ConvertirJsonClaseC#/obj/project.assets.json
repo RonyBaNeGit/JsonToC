@@ -1046,35 +1046,28 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\banr25734\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+    "C:\\Users\\rbarr\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\banr25734\\Desktop\\ConvertirJsonClaseC#\\ConvertirJsonClaseC#\\ConvertirJsonClaseC.csproj",
+      "projectUniqueName": "C:\\Users\\rbarr\\Desktop\\ProyectosNuevos\\Proyecto herramienta\\JsonToC\\ConvertirJsonClaseC#\\ConvertirJsonClaseC.csproj",
       "projectName": "ConvertirJsonClaseC",
-      "projectPath": "C:\\Users\\banr25734\\Desktop\\ConvertirJsonClaseC#\\ConvertirJsonClaseC#\\ConvertirJsonClaseC.csproj",
-      "packagesPath": "C:\\Users\\banr25734\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\banr25734\\Desktop\\ConvertirJsonClaseC#\\ConvertirJsonClaseC#\\obj\\",
+      "projectPath": "C:\\Users\\rbarr\\Desktop\\ProyectosNuevos\\Proyecto herramienta\\JsonToC\\ConvertirJsonClaseC#\\ConvertirJsonClaseC.csproj",
+      "packagesPath": "C:\\Users\\rbarr\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\rbarr\\Desktop\\ProyectosNuevos\\Proyecto herramienta\\JsonToC\\ConvertirJsonClaseC#\\obj\\",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-      ],
       "configFilePaths": [
-        "C:\\Users\\banr25734\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Users\\rbarr\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net8.0-windows"
       ],
       "sources": {
-        "C:\\LocalNugetPackages": {},
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "C:\\Program Files\\dotnet\\library-packs": {},
-        "https://api.nuget.org/v3/index.json": {},
-        "https://scdp100207.capome.coop/LibreriasComunesCPM/v3/index.json": {}
+        "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net8.0-windows7.0": {
@@ -1091,8 +1084,7 @@
         "enableAudit": "true",
         "auditLevel": "low",
         "auditMode": "direct"
-      },
-      "SdkAnalysisLevel": "9.0.300"
+      }
     },
     "frameworks": {
       "net8.0-windows7.0": {
@@ -1126,7 +1118,7 @@
             "privateAssets": "none"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.303/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
