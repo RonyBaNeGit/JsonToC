@@ -316,6 +316,46 @@
                 </Grid>
             </TabItem>
 
+            <!-- ======================= TAB 4: Configuración ======================= -->
+            <TabItem Header="Configuración">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Vertical" Margin="0,0,0,8">
+                        <TextBlock Text="Configuración de IA (POE)"
+                                   FontWeight="Bold"
+                                   FontSize="14"
+                                   Margin="0,0,0,8"/>
+
+                        <TextBlock Text="API Key de POE:"
+                                   Margin="0,0,0,2"/>
+
+                        <PasswordBox x:Name="PoeApiKeyBox"
+                                     Width="420"
+                                     Margin="0,0,0,4"
+                                     ToolTip="Pega aquí tu API Key personal de POE. Se guardará solo en tu usuario (AppData)."/>
+
+                        <TextBlock x:Name="PoeConfigStatus"
+                                   Margin="0,2,0,8"
+                                   Foreground="Gray"/>
+
+                        <Button x:Name="BtnSavePoeConfig"
+                                Content="Guardar configuración"
+                                Width="180"
+                                Height="30"
+                                Click="BtnSavePoeConfig_Click"/>
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="1"
+                               Text="La API key se guarda de forma local por usuario, en AppData. Si dejas este campo vacío, la aplicación no usará Poe y se intentará usar la solución local configurada en appsettings.json."
+                               TextWrapping="Wrap"
+                               Foreground="Gray"/>
+                </Grid>
+            </TabItem>
+
         </TabControl>
 
         <!-- Overlay de “Procesando…” reutilizable (cuadro pequeño centrado) -->

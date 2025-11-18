@@ -20,6 +20,9 @@ namespace ConvertirJsonClaseC_.UI
         // C# -> JSON
         private string? _selectedCsPath;
 
+        // TAB 3: Fix comentarios
+        private string? _selectedFixPath;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -33,6 +36,29 @@ namespace ConvertirJsonClaseC_.UI
             BtnCopyJson.IsEnabled = false;
             SelectedCsLabel.Text = string.Empty;
             StatusTextCs.Text = string.Empty;
+
+            // Tab 3 (por defecto texto de estado vacío)
+            FixStatusText.Text = string.Empty;
+
+            // ==== Nueva sección: cargar configuración de usuario para POE ====
+            try
+            {
+                var userSettings = UserSettingsStore.Load();
+
+                if (!string.IsNullOrWhiteSpace(userSettings.PoeApiKey))
+                {
+                    PoeApiKeyBox.Password = userSettings.PoeApiKey;
+                    PoeConfigStatus.Text = "API key configurada.";
+                }
+                else
+                {
+                    PoeConfigStatus.Text = "No hay API key configurada. Se usará la solución local (si está habilitada).";
+                }
+            }
+            catch
+            {
+                PoeConfigStatus.Text = "No se pudo leer la configuración de usuario.";
+            }
         }
 
         // Overlay reutilizable
@@ -285,7 +311,6 @@ namespace ConvertirJsonClaseC_.UI
         }
 
         // ============== TAB 3: Arreglar comentarios (C#) ==============
-        private string? _selectedFixPath;
 
         private void BtnImportFix_Click(object sender, RoutedEventArgs e)
         {
@@ -352,7 +377,7 @@ namespace ConvertirJsonClaseC_.UI
             }
             finally
             {
-                SetBusy("Procesando…", false);
+                SetBusy("Arreglando comentarios…", false);
             }
         }
 
@@ -362,6 +387,36 @@ namespace ConvertirJsonClaseC_.UI
             {
                 Clipboard.SetText(FixOutput.Text);
                 FixStatusText.Text = "Código copiado al portapapeles.";
+            }
+        }
+
+        // ============== TAB 4: Configuración (POE) ==============
+
+        private void BtnSavePoeConfig_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var key = PoeApiKeyBox.Password?.Trim() ?? string.Empty;
+
+                var settings = UserSettingsStore.Load();
+                settings.PoeApiKey = key;
+                UserSettingsStore.Save(settings);
+
+                // Recargar AiService para que tome la nueva key (o la deje vacía)
+                AiService.ReloadConfig();
+
+                PoeConfigStatus.Text = string.IsNullOrWhiteSpace(key)
+                    ? "Se guardó una API key vacía. No se usará Poe; se intentará usar la solución local."
+                    : "API key guardada correctamente. Poe está habilitado.";
+            }
+            catch (Exception ex)
+            {
+                PoeConfigStatus.Text = "Error al guardar la API key.";
+                MessageBox.Show(
+                    $"Ocurrió un error al guardar la configuración:\n{ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
     }

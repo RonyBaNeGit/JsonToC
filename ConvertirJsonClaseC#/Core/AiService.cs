@@ -101,10 +101,8 @@
 
             if (!File.Exists(path))
             {
-                // No hay archivo → defaults
-#if DEBUG
                 Debug.WriteLine("[AiService] appsettings.json no encontrado. Usando defaults.");
-#endif
+
                 return;
             }
 
@@ -119,14 +117,24 @@
             using var doc = JsonDocument.Parse(json, opts);
             var root = doc.RootElement;
 
-            //// --- POE ---
-            if (root.TryGetProperty("poe", out var poe))
+            // --- POE ---
+            if (root.TryGetProperty("poe", out var poeSection) ||
+                root.TryGetProperty("Poe", out poeSection))
             {
-                _poe.ApiKey = poe.TryGetProperty("apikey", out var k) ? (k.GetString() ?? "") : _poe.ApiKey;
-                _poe.BaseUrl = poe.TryGetProperty("baseurl", out var u) ? (u.GetString() ?? _poe.BaseUrl) : _poe.BaseUrl;
-                _poe.Model = poe.TryGetProperty("model", out var m) ? (m.GetString() ?? _poe.Model) : _poe.Model;
-                _poe.Temperature = poe.TryGetProperty("temperature", out var t) ? t.GetDouble() : _poe.Temperature;
-                _poe.MaxTokens = poe.TryGetProperty("maxtokens", out var mt) ? mt.GetInt32() : _poe.MaxTokens;
+                // NOTA: dejamos apikey vacío en appsettings, el real vendrá de la configuración de usuario
+                if (poeSection.TryGetProperty("baseurl", out var u) || poeSection.TryGetProperty("BaseUrl", out u))
+                    _poe.BaseUrl = u.GetString() ?? _poe.BaseUrl;
+
+                if (poeSection.TryGetProperty("model", out var m) || poeSection.TryGetProperty("Model", out m))
+                    _poe.Model = m.GetString() ?? _poe.Model;
+
+                if (poeSection.TryGetProperty("temperature", out var t) || poeSection.TryGetProperty("Temperature", out t))
+                    _poe.Temperature = t.GetDouble();
+
+                if (poeSection.TryGetProperty("maxtokens", out var mt) || poeSection.TryGetProperty("MaxTokens", out mt))
+                    _poe.MaxTokens = mt.GetInt32();
+
+                // apikey se deja como está (_poe.ApiKey se llenará desde la configuración de usuario)
             }
 
             // --- LOCAL ---
@@ -139,10 +147,30 @@
             }
 
             // Normalizaciones
-            _poe.BaseUrl = NormalizeBase(_poe.BaseUrl, "https://api.poe.com/v1");
+            _poe.BaseUrl = NormalizeBase(_poe.BaseUrl, "https://api.poe.com");
             _local.BaseUrl = NormalizeBase(_local.BaseUrl, "http://127.0.0.1:8000");
             _local.DescribeEndpoint = NormalizePath(_local.DescribeEndpoint, "/describe_class");
+
+            // --- OVERRIDE con configuración de usuario (campo de configuración de tu herramienta) ---
+            try
+            {
+                var userSettings = UserSettingsStore.Load();
+                if (!string.IsNullOrWhiteSpace(userSettings.PoeApiKey))
+                {
+                    _poe.ApiKey = userSettings.PoeApiKey;
+                }
+                else
+                {
+                    // Si NO hay API key de usuario, no usamos Poe
+                    _poe.ApiKey = string.Empty;
+                }
+            }
+            catch
+            {
+                _poe.ApiKey = string.Empty;
+            }
         }
+
 
         private static string NormalizeBase(string? baseUrl, string fallback)
         {
@@ -180,10 +208,24 @@
             foreach (var c in classes)
             {
                 // Clase
+                // Clase
                 var classPrompt =
-                    "Redacta una descripción breve, formal y clara en español para documentación XML de C#. " +
-                    "No incluyas comillas ni markdown. No repitas el nombre de la clase.";
-                c.ClassSummary = Sanitize(await AskAsync(classPrompt));
+                    $"Redacta una descripción breve, formal y clara en español para documentación XML de C#, " +
+                    $"que describa la finalidad de la clase '{c.ClassName}'. " +
+                    "La clase representa una entidad de dominio basada en datos JSON. " +
+                    "No incluyas comillas ni markdown, responde solo con la descripción.";
+                var rawClassDesc = await AskAsync(classPrompt);
+                var sanitizedClassDesc = Sanitize(rawClassDesc);
+
+                // Si la IA respondió algo raro (pregunta, instrucción, etc.), usamos fallback
+                if (LooksLikeInstructionOrQuestion(sanitizedClassDesc))
+                {
+                    c.ClassSummary = "Representa una entidad de dominio basada en datos JSON.";
+                }
+                else
+                {
+                    c.ClassSummary = sanitizedClassDesc;
+                }
 
                 // Propiedades en batch local (prioridad local)
                 var props = c.Properties.Select(p => (p.Name, p.Type)).ToList();
@@ -224,27 +266,62 @@
         // ===== Núcleo: Local → POE → fallback =====
         private static async Task<string> AskAsync(string userPrompt)
         {
-            var preferLocal = _local.Enabled && _local.PreferLocalFirst;
+            // Disponibilidad real
+            bool poeAvailable = !string.IsNullOrWhiteSpace(_poe.ApiKey) && _httpPoe.BaseAddress is not null;
+            bool localAvailable = _local.Enabled && _httpLocal.BaseAddress is not null;
 
-            if (preferLocal)
+            // Caso 1: NO hay Poe → solo local (si está disponible)
+            if (!poeAvailable && localAvailable)
             {
-                var r = await TryAskLocal(userPrompt);
-                if (!string.IsNullOrWhiteSpace(r)) return r;
+                var rLocal = await TryAskLocal(userPrompt);
+                if (!string.IsNullOrWhiteSpace(rLocal))
+                    return rLocal;
 
-                var r2 = await TryAskPoe(userPrompt);
-                if (!string.IsNullOrWhiteSpace(r2)) return r2;
-            }
-            else
-            {
-                var r = await TryAskPoe(userPrompt);
-                if (!string.IsNullOrWhiteSpace(r)) return r;
-
-                var r2 = await TryAskLocal(userPrompt);
-                if (!string.IsNullOrWhiteSpace(r2)) return r2;
+                // Si local falla, hacemos fallback
+                return "Descripción generada automáticamente.";
             }
 
+            // Caso 2: hay Poe y también local
+            if (poeAvailable && localAvailable)
+            {
+                if (_local.PreferLocalFirst)
+                {
+                    var rLocal = await TryAskLocal(userPrompt);
+                    if (!string.IsNullOrWhiteSpace(rLocal))
+                        return rLocal;
+
+                    var rPoe = await TryAskPoe(userPrompt);
+                    if (!string.IsNullOrWhiteSpace(rPoe))
+                        return rPoe;
+                }
+                else
+                {
+                    var rPoe = await TryAskPoe(userPrompt);
+                    if (!string.IsNullOrWhiteSpace(rPoe))
+                        return rPoe;
+
+                    var rLocal = await TryAskLocal(userPrompt);
+                    if (!string.IsNullOrWhiteSpace(rLocal))
+                        return rLocal;
+                }
+
+                return "Descripción generada automáticamente.";
+            }
+
+            // Caso 3: solo Poe disponible
+            if (poeAvailable && !localAvailable)
+            {
+                var rPoe = await TryAskPoe(userPrompt);
+                if (!string.IsNullOrWhiteSpace(rPoe))
+                    return rPoe;
+
+                return "Descripción generada automáticamente.";
+            }
+
+            // Caso 4: no hay ni Poe ni Local
             return "Descripción generada automáticamente.";
         }
+
 
         // ===== LOCAL =====
         private static async Task<string> TryAskLocal(string userPrompt)
@@ -334,7 +411,7 @@
                 };
 
                 var json = JsonSerializer.Serialize(payload, _jsonOpts);
-                using var req = new HttpRequestMessage(HttpMethod.Post, "/chat/completions")
+                using var req = new HttpRequestMessage(HttpMethod.Post, "/v1/chat/completions")
                 {
                     Content = new StringContent(json, Encoding.UTF8, "application/json")
                 };
@@ -409,11 +486,51 @@
             return s;
         }
 
+        private static bool LooksLikeInstructionOrQuestion(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return true;
+
+            var t = text.Trim();
+
+            // Si huele a pregunta
+            if (t.EndsWith("?"))
+                return true;
+
+            // Patrones típicos de “contra-prompt”
+            var patterns = new[]
+            {
+        "necesito que me proporciones",
+        "necesito que me indiques",
+        "dime qué",
+        "dime que",
+        "indica qué",
+        "proporciona el código",
+        "proporciona el nombre",
+        "por favor proporciona",
+        "qué clase necesitas",
+        "qué método necesitas",
+        "qué propiedad necesitas",
+        "provide the code",
+        "please provide",
+        "i need you to provide"
+    };
+
+            foreach (var p in patterns)
+            {
+                if (t.IndexOf(p, StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+            }
+
+            return false;
+        }
+
+
 
         private class PoeConfig
         {
             public string ApiKey { get; set; } = "";
-            public string BaseUrl { get; set; } = "https://api.poe.com/v1";
+            public string BaseUrl { get; set; } = "https://api.poe.com";
             public string Model { get; set; } = "Claude-Sonnet-4";
             public double Temperature { get; set; } = 0.2;
             public int MaxTokens { get; set; } = 200;
