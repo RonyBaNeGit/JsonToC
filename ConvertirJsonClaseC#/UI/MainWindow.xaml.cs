@@ -697,6 +697,145 @@ namespace ConvertirJsonClaseC_.UI
                             MessageBoxButton.OK,
                             MessageBoxImage.Information);
         }
+        // ============== TAB: SQL ↔ C# (Tablas) ==============
+
+        private async void BtnSqlToCSharp_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Usar los campos de la pestaña SQL ↔ C# (no los de JSON → C#)
+                if (!ValidateRequired(
+                        (SqlNamespaceBox, "Namespace"),
+                        (SqlAuthorNameBox, "Autor"),
+                        (SqlAuthorIdBox, "ID")))
+                    return;
+
+                var ns = SqlNamespaceBox.Text.Trim();
+                var authorName = SqlAuthorNameBox.Text.Trim();
+                var authorId = SqlAuthorIdBox.Text.Trim();
+                var author = string.IsNullOrWhiteSpace(authorId)
+                    ? authorName
+                    : $"{authorName} ({authorId})";
+
+                var sql = SqlCreateInput.Text; // TextBox donde pegas el CREATE TABLE
+                if (string.IsNullOrWhiteSpace(sql))
+                {
+                    MessageBox.Show("Proporciona un script CREATE TABLE.", "Validación",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                SetBusy("Procesando CREATE TABLE → C#…", true);
+                SqlToClassOutput.Clear();
+
+                // Nombre de clase explícito (opcional)
+                var explicitClassName = string.IsNullOrWhiteSpace(SqlClassNameBox.Text)
+                    ? null
+                    : SqlClassNameBox.Text.Trim();
+
+                // 1. Parsear SQL a ClassDef
+                var classDef = SqlCreateTableParser.ParseCreateTable(sql, explicitClassName);
+                var classes = new List<ClassDef> { classDef };
+
+                // 2. Descripciones (IA o fallback)
+                if (SqlUseAiDescriptions.IsChecked == true)
+                    await AiService.PopulateDescriptionsAsync(classes);
+                else
+                    AiService.PopulateFallbackDescriptions(classes);
+
+                // 3. Generar código C# con tu formato estándar
+                var code = CodeGenerator.GenerateClasses(ns, author, classes);
+
+                SqlToClassOutput.Text = code;
+            }
+            catch (Exception ex)
+            {
+                SqlToClassOutput.Text = $"// Error: {ex.Message}\r\n// {ex}";
+            }
+            finally
+            {
+                SetBusy("Procesando…", false);
+            }
+        }
+
+        private void BtnSqlToCSharpCopy_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(SqlToClassOutput.Text))
+            {
+                MessageBox.Show("No hay código C# para copiar.", "Aviso",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            Clipboard.SetText(SqlToClassOutput.Text);
+            MessageBox.Show("Código C# copiado al portapapeles.", "Listo",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void BtnCSharpToSql_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var csharp = CsForSqlInputTextBox.Text;
+                if (string.IsNullOrWhiteSpace(csharp))
+                {
+                    MessageBox.Show("Proporciona código C#.", "Validación",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (!IsValidCSharp(csharp, out var csErr))
+                {
+                    MessageBox.Show($"C# inválido:\n{csErr}", "Error",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                var rootClass = string.IsNullOrWhiteSpace(SqlRootClassBox.Text)
+                    ? "Root"
+                    : SqlRootClassBox.Text.Trim();
+
+                var schema = string.IsNullOrWhiteSpace(SqlSchemaBox.Text)
+                    ? "dbo"
+                    : SqlSchemaBox.Text.Trim();
+
+                SetBusy("Procesando C# → CREATE TABLE…", true);
+                SqlFromClassOutputTextBox.Clear();
+
+                // 1. Analizar clases
+                var classes = CsModelParser.ParseClasses(csharp);
+
+                // 2. Generar CREATE TABLE
+                var sql = CSharpToSqlTableGenerator.GenerateCreateTable(classes, rootClass, schema);
+
+                SqlFromClassOutputTextBox.Text = sql;
+            }
+            catch (Exception ex)
+            {
+                SqlFromClassOutputTextBox.Text = $"-- Error: {ex.Message}\r\n-- {ex}";
+            }
+            finally
+            {
+                SetBusy("Procesando…", false);
+            }
+        }
+
+        private void BtnCSharpToSqlCopy_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(SqlFromClassOutputTextBox.Text))
+            {
+                MessageBox.Show("No hay script SQL para copiar.", "Aviso",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            Clipboard.SetText(SqlFromClassOutputTextBox.Text);
+            MessageBox.Show("Script CREATE TABLE copiado al portapapeles.", "Listo",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+
+
 
 
 

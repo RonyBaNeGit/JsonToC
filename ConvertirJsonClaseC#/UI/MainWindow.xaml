@@ -535,6 +535,179 @@
                     </StackPanel>
                 </Grid>
             </TabItem>
+            <!-- ======================= TAB: SQL ↔ C# (Tablas) ======================= -->
+            <TabItem Header="SQL ↔ C# (Tablas)">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- ======== SECCIÓN 1: CREATE TABLE -> C# ======== -->
+                    <GroupBox Header="CREATE TABLE → Clase C#" Grid.Row="0" Margin="0,0,0,8">
+                        <Grid Margin="6">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <!-- Configuración -->
+                                <RowDefinition Height="Auto"/>
+                                <!-- Checkbox IA -->
+                                <RowDefinition Height="*"/>
+                                <!-- SQL input -->
+                                <RowDefinition Height="Auto"/>
+                                <!-- Botones -->
+                                <RowDefinition Height="*"/>
+                                <!-- Salida C# -->
+                            </Grid.RowDefinitions>
+
+                            <!-- Configuración de clase -->
+                            <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,6">
+                                <TextBlock Text="Namespace:" VerticalAlignment="Center"/>
+                                <TextBox x:Name="SqlNamespaceBox"
+                     Width="260"
+                     Margin="6,0,14,0"
+                     Text="CPM.X.X"/>
+
+                                <TextBlock Text="Nombre de clase (opcional):" VerticalAlignment="Center"/>
+                                <TextBox x:Name="SqlClassNameBox"
+                     Width="180"
+                     Margin="6,0,14,0"
+                     ToolTip="Si se deja vacío, se usa el nombre de la tabla."/>
+
+                                <TextBlock Text="Autor:" VerticalAlignment="Center"/>
+                                <TextBox x:Name="SqlAuthorNameBox"
+                     Width="160"
+                     Margin="6,0,6,0"
+                     Text="Ronaldo"/>
+
+                                <TextBlock Text="ID:" VerticalAlignment="Center"/>
+                                <TextBox x:Name="SqlAuthorIdBox"
+                     Width="120"
+                     Margin="6,0,0,0"
+                     Text="BANR25734"/>
+                            </StackPanel>
+
+                            <!-- Checkbox IA en su propia fila -->
+                            <CheckBox x:Name="SqlUseAiDescriptions"
+                  Grid.Row="1"
+                  Content="Generar descripciones con IA"
+                  IsChecked="True"
+                  Margin="0,0,0,4"/>
+
+                            <!-- Entrada SQL -->
+                            <GroupBox Header="Script CREATE TABLE (SQL Server)"
+                  Grid.Row="2"
+                  Margin="0,4,0,6">
+                                <TextBox x:Name="SqlCreateInput"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     VerticalScrollBarVisibility="Auto"
+                     HorizontalScrollBarVisibility="Auto"
+                     FontFamily="Consolas"
+                     FontSize="13"
+                     Height="150"
+                     ToolTip="Pega aquí un script CREATE TABLE de SQL Server."/>
+                            </GroupBox>
+
+                            <!-- Botones -->
+                            <StackPanel Orientation="Horizontal"
+                    Grid.Row="3"
+                    Margin="0,0,0,4"
+                    HorizontalAlignment="Left">
+                                <Button x:Name="BtnSqlToCSharp"
+                    Content="Generar clase C#"
+                    Width="150"
+                    Margin="0,0,8,0"
+                    Click="BtnSqlToCSharp_Click"/>
+                                <Button x:Name="BtnSqlToCSharpCopy"
+                    Content="Copiar resultado"
+                    Width="140"
+                    Click="BtnSqlToCSharpCopy_Click"/>
+                            </StackPanel>
+
+                            <!-- Salida C# -->
+                            <GroupBox Header="Código C# generado" Grid.Row="4">
+                                <TextBox x:Name="SqlToClassOutput"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     VerticalScrollBarVisibility="Auto"
+                     HorizontalScrollBarVisibility="Auto"
+                     FontFamily="Consolas"
+                     FontSize="13"
+                     Height="150"
+                     IsReadOnly="True"/>
+                            </GroupBox>
+                        </Grid>
+                    </GroupBox>
+
+
+                    <!-- ======== SECCIÓN 2: C# -> CREATE TABLE ======== -->
+                    <GroupBox Header="Clase C# → CREATE TABLE" Grid.Row="1">
+                        <Grid Margin="6">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Config -->
+                            <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,6">
+                                <TextBlock Text="Clase raíz:" VerticalAlignment="Center"/>
+                                <TextBox x:Name="SqlRootClassBox"
+                             Width="200"
+                             Margin="6,0,14,0"
+                             ToolTip="Nombre de la clase que se convertirá en tabla. Debe existir en el código."/>
+
+                                <TextBlock Text="Schema:" VerticalAlignment="Center"/>
+                                <TextBox x:Name="SqlSchemaBox"
+                             Width="80"
+                             Margin="6,0,14,0"
+                             Text="dbo"
+                             ToolTip="Schema de la tabla (ej. dbo)."/>
+                            </StackPanel>
+
+                            <!-- Entrada C# -->
+                            <GroupBox Header="Código C# de entrada" Grid.Row="1" Margin="0,4,0,6">
+                                <TextBox x:Name="CsForSqlInputTextBox"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             VerticalScrollBarVisibility="Auto"
+                             HorizontalScrollBarVisibility="Auto"
+                             FontFamily="Consolas"
+                             FontSize="13"
+                             Height="150"
+                             ToolTip="Pega aquí tus clases C#. Se usará la clase raíz indicada para generar el CREATE TABLE."/>
+                            </GroupBox>
+
+                            <!-- Botones -->
+                            <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="0,0,0,4" HorizontalAlignment="Left">
+                                <Button x:Name="BtnCSharpToSql"
+                            Content="Generar CREATE TABLE"
+                            Width="170"
+                            Margin="0,0,8,0"
+                            Click="BtnCSharpToSql_Click"/>
+                                <Button x:Name="BtnCSharpToSqlCopy"
+                            Content="Copiar resultado"
+                            Width="140"
+                            Click="BtnCSharpToSqlCopy_Click"/>
+                            </StackPanel>
+
+                            <!-- Salida SQL -->
+                            <GroupBox Header="Script CREATE TABLE generado" Grid.Row="3">
+                                <TextBox x:Name="SqlFromClassOutputTextBox"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             VerticalScrollBarVisibility="Auto"
+                             HorizontalScrollBarVisibility="Auto"
+                             FontFamily="Consolas"
+                             FontSize="13"
+                             Height="150"
+                             IsReadOnly="True"/>
+                            </GroupBox>
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
 
 
         </TabControl>
