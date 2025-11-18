@@ -207,59 +207,131 @@
         {
             foreach (var c in classes)
             {
-                // Clase
-                // Clase
-                var classPrompt =
-                    $"Redacta una descripción breve, formal y clara en español para documentación XML de C#, " +
-                    $"que describa la finalidad de la clase '{c.ClassName}'. " +
-                    "La clase representa una entidad de dominio basada en datos JSON. " +
-                    "No incluyas comillas ni markdown, responde solo con la descripción.";
-                var rawClassDesc = await AskAsync(classPrompt);
-                var sanitizedClassDesc = Sanitize(rawClassDesc);
+                // ======== DESCRIPCIÓN DE LA CLASE =========
 
-                // Si la IA respondió algo raro (pregunta, instrucción, etc.), usamos fallback
-                if (LooksLikeInstructionOrQuestion(sanitizedClassDesc))
+                string classDesc;
+
+                if (DescriptionGlossary.TryGetClassDescription(c.ClassName, out var cachedClassDesc)
+                    && !string.IsNullOrWhiteSpace(cachedClassDesc))
                 {
-                    c.ClassSummary = "Representa una entidad de dominio basada en datos JSON.";
+                    classDesc = cachedClassDesc;
                 }
                 else
                 {
-                    c.ClassSummary = sanitizedClassDesc;
+                    var classPrompt =
+                        $"Redacta una descripción breve, formal y clara en español para documentación XML de C#, " +
+                        $"que describa la finalidad de la clase '{c.ClassName}'. " +
+                        "La clase representa una entidad de dominio basada en datos JSON. " +
+                        "No incluyas comillas ni markdown, responde solo con la descripción.";
+
+                    var rawClassDesc = await AskAsync(classPrompt);
+                    var sanitizedClassDesc = Sanitize(rawClassDesc);
+
+                    if (LooksLikeInstructionOrQuestion(sanitizedClassDesc) ||
+                        string.IsNullOrWhiteSpace(sanitizedClassDesc))
+                    {
+                        classDesc = "Representa una entidad de dominio basada en datos JSON.";
+                    }
+                    else
+                    {
+                        classDesc = sanitizedClassDesc;
+                    }
+
+                    DescriptionGlossary.AddOrUpdateClassDescription(c.ClassName, classDesc);
                 }
 
-                // Propiedades en batch local (prioridad local)
-                var props = c.Properties.Select(p => (p.Name, p.Type)).ToList();
+                c.ClassSummary = classDesc;
+
+                // ======== DESCRIPCIONES DE PROPIEDADES =========
+
+                // 1) Intentamos obtener del glosario
+                var propsNeedingAi = new List<(PropertyDef Prop, string Name, string Type)>();
+
+                foreach (var p in c.Properties)
+                {
+                    if (DescriptionGlossary.TryGetPropertyDescription(c.ClassName, p.Name, out var cachedPropDesc)
+                        && !string.IsNullOrWhiteSpace(cachedPropDesc))
+                    {
+                        p.Summary = cachedPropDesc;
+                    }
+                    else
+                    {
+                        propsNeedingAi.Add((p, p.Name, p.Type));
+                    }
+                }
+
+                if (propsNeedingAi.Count == 0)
+                    continue; // todas las propiedades cubiertas por glosario
+
+                // 2) Propiedades restantes: intentar batch local primero
                 IReadOnlyList<string> localBatch = Array.Empty<string>();
 
-                if (_local.Enabled) // prioridad local
-                    localBatch = await TryAskLocalPropsBatch(props, 96);
-
-                if (localBatch.Count == props.Count)
+                if (_local.Enabled)
                 {
-                    for (int i = 0; i < props.Count; i++)
-                        c.Properties[i].Summary = Sanitize(localBatch[i]);
+                    var batchInput = propsNeedingAi.Select(x => (x.Name, x.Type)).ToList();
+                    localBatch = await TryAskLocalPropsBatch(batchInput, 96);
+                }
+
+                if (localBatch.Count == propsNeedingAi.Count)
+                {
+                    // Asignamos todas desde local
+                    for (int i = 0; i < propsNeedingAi.Count; i++)
+                    {
+                        var propDef = propsNeedingAi[i].Prop;
+                        var desc = Sanitize(localBatch[i]);
+
+                        if (string.IsNullOrWhiteSpace(desc) || LooksLikeInstructionOrQuestion(desc))
+                        {
+                            desc = $"Campo {propDef.Name} ({propDef.Type}).";
+                        }
+
+                        propDef.Summary = desc;
+                        DescriptionGlossary.AddOrUpdatePropertyDescription(c.ClassName, propDef.Name, desc);
+                    }
                 }
                 else
                 {
-                    // Si el batch falló: fallback propiedades una a una
-                    foreach (var p in c.Properties)
+                    // Si el batch falló o vino incompleto -> IA propiedad por propiedad
+                    foreach (var (propDef, name, type) in propsNeedingAi)
                     {
                         var propPrompt =
-                            $"Redacta una descripción breve (una línea), en español, para la propiedad '{p.Name}' (tipo: {p.Type}). " +
-                            $"No uses comillas ni markdown.";
-                        p.Summary = Sanitize(await AskAsync(propPrompt));
+                            $"Redacta una descripción breve (una línea), en español, para la propiedad '{name}' (tipo: {type}). " +
+                            "No uses comillas ni markdown, responde solo con la descripción.";
+
+                        var raw = await AskAsync(propPrompt);
+                        var desc = Sanitize(raw);
+
+                        if (string.IsNullOrWhiteSpace(desc) || LooksLikeInstructionOrQuestion(desc))
+                        {
+                            desc = $"Campo {name} ({type}).";
+                        }
+
+                        propDef.Summary = desc;
+                        DescriptionGlossary.AddOrUpdatePropertyDescription(c.ClassName, name, desc);
                     }
                 }
             }
         }
 
+
         public static void PopulateFallbackDescriptions(List<ClassDef> classes)
         {
             foreach (var c in classes)
             {
-                c.ClassSummary = "Representa una entidad de dominio basada en datos JSON.";
+                var classDesc = "Representa una entidad de dominio basada en datos JSON.";
+                c.ClassSummary = classDesc;
+
+                // Guardar en el glosario
+                DescriptionGlossary.AddOrUpdateClassDescription(c.ClassName, classDesc);
+
                 foreach (var p in c.Properties)
-                    p.Summary = $"Campo {p.Name} ({p.Type}).";
+                {
+                    var desc = $"Campo {p.Name} ({p.Type}).";
+                    p.Summary = desc;
+
+                    // Guardar en glosario
+                    DescriptionGlossary.AddOrUpdatePropertyDescription(c.ClassName, p.Name, desc);
+                }
             }
         }
 

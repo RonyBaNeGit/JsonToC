@@ -35,14 +35,14 @@
                         <TextBox x:Name="AuthorNameBox"
                                  Width="200"
                                  Margin="8,0,8,0"
-                                 Text="Ronaldo"
+                                 Text="NombreUsuario"
                                  ToolTip="Creador de la clase (se mostrará en los comentarios XML). Ej.: Juan Pérez"/>
 
                         <TextBlock Text="ID:" VerticalAlignment="Center"/>
                         <TextBox x:Name="AuthorIdBox"
                                  Width="130"
                                  Margin="8,0,0,0"
-                                 Text="BANR25734"
+                                 Text="IDCPM"
                                  ToolTip="Identificador del colaborador (legajo/employee ID). Se agrega junto al nombre del autor, ej.: BANR25734"/>
                     </StackPanel>
 
@@ -141,7 +141,7 @@
                         <TextBox x:Name="RootClassBox"
                                  Width="260"
                                  Margin="8,0,16,0"
-                                 Text=""
+                                 Text="NombreEntidad"
                                  ToolTip="Nombre de la clase que se usará como objeto raíz al generar el JSON de ejemplo. Debe coincidir exactamente con una clase pública detectada en el código. Si lo dejas vacío se usará “Root”."/>
 
                         <CheckBox x:Name="PrettyJson" Content="JSON con sangría" IsChecked="True"/>
@@ -234,14 +234,14 @@
                         <TextBox x:Name="FixAuthorNameBox"
                                  Width="200"
                                  Margin="8,0,8,0"
-                                 Text=""
+                                 Text="NombreUsuario"
                                  ToolTip="Creador de la clase (para los comentarios generados). Ej.: Ana López"/>
 
                         <TextBlock Text="ID:" VerticalAlignment="Center"/>
                         <TextBox x:Name="FixAuthorIdBox"
                                  Width="130"
                                  Margin="8,0,16,0"
-                                 Text=""
+                                 Text="IDCPM"
                                  ToolTip="Identificador del colaborador (legajo/employee ID). Ej.: BANR25734"/>
 
                         <CheckBox x:Name="FixUseAi" Content="Generar descripciones con IA (POE)" IsChecked="True"/>
@@ -355,6 +355,187 @@
                                Foreground="Gray"/>
                 </Grid>
             </TabItem>
+            <!-- ======================= TAB: Glosario ======================= -->
+            <TabItem Header="Glosario">
+                <ScrollViewer Margin="8" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Orientation="Vertical">
+
+                        <!-- ======= CLASES ======= -->
+                        <TextBlock Text="Glosario de descripciones de clases"
+                       FontWeight="Bold"
+                       FontSize="14"
+                       Margin="0,0,0,8"/>
+
+                        <DataGrid x:Name="ClassGlossaryGrid"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      IsReadOnly="False"
+                      Margin="0,0,0,4">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Nombre de clase"
+                                        Binding="{Binding ClassName}"
+                                        Width="*"/>
+                                <DataGridTextColumn Header="Descripción"
+                                        Binding="{Binding Description}"
+                                        Width="2*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Left"
+                        Margin="0,0,0,12">
+                            <Button x:Name="BtnClassGlossaryAddRow"
+                        Content="Agregar fila"
+                        Width="110"
+                        Margin="0,0,8,0"
+                        Click="BtnClassGlossaryAddRow_Click"/>
+                            <Button x:Name="BtnClassGlossaryRemoveRow"
+                        Content="Eliminar fila seleccionada"
+                        Width="170"
+                        Margin="0,0,8,0"
+                        Click="BtnClassGlossaryRemoveRow_Click"/>
+                            <Button x:Name="BtnClassGlossaryReload"
+                        Content="Recargar"
+                        Width="110"
+                        Margin="0,0,8,0"
+                        Click="BtnClassGlossaryReload_Click"/>
+                            <Button x:Name="BtnClassGlossarySave"
+                        Content="Guardar cambios"
+                        Width="140"
+                        Click="BtnClassGlossarySave_Click"/>
+
+                            <TextBlock x:Name="ClassGlossaryStatusText"
+                           Margin="16,0,0,0"
+                           VerticalAlignment="Center"
+                           Foreground="Gray"/>
+                        </StackPanel>
+
+                        <Separator Margin="0,0,0,8"/>
+
+                        <!-- ======= PROPIEDADES GENÉRICAS ======= -->
+                        <TextBlock Text="Glosario de descripciones genéricas de propiedades"
+                       FontWeight="Bold"
+                       FontSize="14"
+                       Margin="0,0,0,8"/>
+
+                        <DataGrid x:Name="GenericGlossaryGrid"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      IsReadOnly="False"
+                      Margin="0,0,0,4">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Nombre de propiedad"
+                                        Binding="{Binding PropertyName}"
+                                        Width="*"/>
+                                <DataGridTextColumn Header="Descripción"
+                                        Binding="{Binding Description}"
+                                        Width="2*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Left"
+                        Margin="0,0,0,0">
+                            <Button x:Name="BtnGlossaryAddRow"
+                        Content="Agregar fila"
+                        Width="110"
+                        Margin="0,0,8,0"
+                        Click="BtnGlossaryAddRow_Click"/>
+                            <Button x:Name="BtnGlossaryRemoveRow"
+                        Content="Eliminar fila seleccionada"
+                        Width="170"
+                        Margin="0,0,8,0"
+                        Click="BtnGlossaryRemoveRow_Click"/>
+                            <Button x:Name="BtnGlossaryReload"
+                        Content="Recargar"
+                        Width="110"
+                        Margin="0,0,8,0"
+                        Click="BtnGlossaryReload_Click"/>
+                            <Button x:Name="BtnGlossarySave"
+                        Content="Guardar cambios"
+                        Width="140"
+                        Click="BtnGlossarySave_Click"/>
+
+                            <TextBlock x:Name="GlossaryStatusText"
+                           Margin="16,0,0,0"
+                           VerticalAlignment="Center"
+                           Foreground="Gray"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+            HorizontalAlignment="Left"
+            Margin="0,12,0,0">
+                            <Button x:Name="BtnOpenGlossaryFolder"
+            Content="Abrir carpeta del glosario"
+            Width="180"
+            Margin="0,0,8,0"
+            Click="BtnOpenGlossaryFolder_Click"/>
+                            <Button x:Name="BtnOpenGlossaryFile"
+            Content="Abrir archivo glossary.json"
+            Width="180"
+            Click="BtnOpenGlossaryFile_Click"/>
+                        </StackPanel>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ======================= TAB: Generar JSON (campos string) ======================= -->
+            <TabItem Header="JSON String Fields">
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Ingresa listado de campos (uno por línea):"
+                   FontSize="14"
+                   FontWeight="Bold"/>
+
+                    <!-- Entrada -->
+                    <TextBox x:Name="TxtStringFieldsInput"
+                 Grid.Row="1"
+                 Margin="0,5,10,0"
+                 VerticalScrollBarVisibility="Auto"
+                 AcceptsReturn="True"
+                 TextWrapping="Wrap"/>
+
+                    <!-- Panel derecho -->
+                    <StackPanel Grid.Column="1"
+                    Grid.Row="1"
+                    VerticalAlignment="Top">
+
+                        <Button Content="Generar JSON"
+                    x:Name="BtnGenerateStringJson"
+                    Width="150"
+                    Margin="0,0,0,10"
+                    Click="BtnGenerateStringJson_Click"/>
+
+                        <TextBlock Text="Resultado:"
+           FontSize="14"
+           FontWeight="Bold"
+           Margin="0,10,0,5"/>
+
+                        <Button Content="Copiar resultado"
+        Width="150"
+        Margin="0,0,0,10"
+        Click="BtnCopyStringJson_Click"/>
+
+                        <TextBox x:Name="TxtStringFieldsOutput"
+         AcceptsReturn="True"
+         TextWrapping="Wrap"
+         VerticalScrollBarVisibility="Auto"
+         Height="300"/>
+
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
 
         </TabControl>
 

@@ -9,6 +9,8 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Win32;
 using System.Text.Json;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 namespace ConvertirJsonClaseC_.UI
 {
@@ -59,7 +61,29 @@ namespace ConvertirJsonClaseC_.UI
             {
                 PoeConfigStatus.Text = "No se pudo leer la configuración de usuario.";
             }
+
+
+            LoadClassGlossary();
+            LoadGenericGlossary();
         }
+
+        private class ClassGlossaryEntry
+        {
+            public string ClassName { get; set; } = string.Empty;
+            public string Description { get; set; } = string.Empty;
+        }
+
+        private class GenericGlossaryEntry
+        {
+            public string PropertyName { get; set; } = string.Empty;
+            public string Description { get; set; } = string.Empty;
+        }
+
+        private readonly ObservableCollection<ClassGlossaryEntry> _classGlossary =
+            new ObservableCollection<ClassGlossaryEntry>();
+
+        private readonly ObservableCollection<GenericGlossaryEntry> _genericGlossary =
+            new ObservableCollection<GenericGlossaryEntry>();
 
         // Overlay reutilizable
         private void SetBusy(string message, bool busy)
@@ -419,5 +443,263 @@ namespace ConvertirJsonClaseC_.UI
                     MessageBoxImage.Error);
             }
         }
+        private void LoadGenericGlossary()
+        {
+            _genericGlossary.Clear();
+
+            foreach (var kv in DescriptionGlossary.GetGenericPropertyEntries())
+            {
+                _genericGlossary.Add(new GenericGlossaryEntry
+                {
+                    PropertyName = kv.Key,
+                    Description = kv.Value
+                });
+            }
+
+            GenericGlossaryGrid.ItemsSource = _genericGlossary;
+            GlossaryStatusText.Text = $"Propiedades genéricas cargadas: {_genericGlossary.Count}";
+        }
+
+        private void BtnGlossaryAddRow_Click(object sender, RoutedEventArgs e)
+        {
+            var entry = new GenericGlossaryEntry();
+            _genericGlossary.Add(entry);
+            GenericGlossaryGrid.ItemsSource = _genericGlossary;
+            GenericGlossaryGrid.SelectedItem = entry;
+            GenericGlossaryGrid.ScrollIntoView(entry);
+        }
+
+        private void BtnGlossaryRemoveRow_Click(object sender, RoutedEventArgs e)
+        {
+            if (GenericGlossaryGrid.SelectedItem is GenericGlossaryEntry selected)
+            {
+                _genericGlossary.Remove(selected);
+                GlossaryStatusText.Text = $"Propiedades genéricas cargadas: {_genericGlossary.Count}";
+            }
+        }
+
+        private void BtnGlossaryReload_Click(object sender, RoutedEventArgs e)
+        {
+            LoadGenericGlossary();
+        }
+
+        private void BtnGlossarySave_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Tomamos las filas con PropertyName y Description no vacíos
+                var entries = _genericGlossary
+                    .Where(x => !string.IsNullOrWhiteSpace(x.PropertyName) &&
+                                !string.IsNullOrWhiteSpace(x.Description))
+                    .Select(x => (x.PropertyName, x.Description))
+                    .ToList();
+
+                DescriptionGlossary.ReplaceGenericPropertyEntries(entries);
+
+                LoadGenericGlossary();
+                GlossaryStatusText.Text = $"Cambios guardados. Total propiedades genéricas: {_genericGlossary.Count}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error al guardar el glosario:\n{ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void LoadClassGlossary()
+        {
+            _classGlossary.Clear();
+
+            foreach (var kv in DescriptionGlossary.GetClassEntries())
+            {
+                _classGlossary.Add(new ClassGlossaryEntry
+                {
+                    ClassName = kv.Key,
+                    Description = kv.Value
+                });
+            }
+
+            ClassGlossaryGrid.ItemsSource = _classGlossary;
+            ClassGlossaryStatusText.Text = $"Clases con descripción: {_classGlossary.Count}";
+        }
+
+        private void BtnClassGlossaryAddRow_Click(object sender, RoutedEventArgs e)
+        {
+            var entry = new ClassGlossaryEntry();
+            _classGlossary.Add(entry);
+            ClassGlossaryGrid.ItemsSource = _classGlossary;
+            ClassGlossaryGrid.SelectedItem = entry;
+            ClassGlossaryGrid.ScrollIntoView(entry);
+        }
+
+        private void BtnClassGlossaryRemoveRow_Click(object sender, RoutedEventArgs e)
+        {
+            if (ClassGlossaryGrid.SelectedItem is ClassGlossaryEntry selected)
+            {
+                _classGlossary.Remove(selected);
+                ClassGlossaryStatusText.Text = $"Clases con descripción: {_classGlossary.Count}";
+            }
+        }
+
+        private void BtnClassGlossaryReload_Click(object sender, RoutedEventArgs e)
+        {
+            LoadClassGlossary();
+        }
+
+        private void BtnClassGlossarySave_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var entries = _classGlossary
+                    .Where(x => !string.IsNullOrWhiteSpace(x.ClassName) &&
+                                !string.IsNullOrWhiteSpace(x.Description))
+                    .Select(x => (x.ClassName, x.Description))
+                    .ToList();
+
+                DescriptionGlossary.ReplaceClassEntries(entries);
+
+                LoadClassGlossary();
+                ClassGlossaryStatusText.Text = $"Cambios guardados. Clases con descripción: {_classGlossary.Count}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error al guardar el glosario de clases:\n{ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void BtnOpenGlossaryFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var dir = DescriptionGlossary.GetGlossaryDirectory();
+
+                if (!Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
+
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = dir,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"No se pudo abrir la carpeta del glosario:\n{ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void BtnOpenGlossaryFile_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var path = DescriptionGlossary.GetGlossaryFilePath();
+
+                if (!File.Exists(path))
+                {
+                    MessageBox.Show(
+                        "Aún no existe el archivo glossary.json.\n" +
+                        "Guarda primero alguna descripción en el glosario para generarlo.",
+                        "Archivo no encontrado",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                    return;
+                }
+
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = path,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"No se pudo abrir el archivo glossary.json:\n{ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+        private void BtnGenerateStringJson_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var raw = TxtStringFieldsInput.Text;
+                if (string.IsNullOrWhiteSpace(raw))
+                {
+                    MessageBox.Show("Ingresa al menos un nombre de campo.", "Aviso",
+                                    MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                var lines = raw.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+                var dict = new Dictionary<string, string>();
+
+                foreach (var line in lines)
+                {
+                    var field = line.Trim();
+
+                    if (string.IsNullOrWhiteSpace(field))
+                        continue;
+
+                    // Nombre de campo tal cual → valor string vacío
+                    dict[field] = "";
+                }
+
+                var json = System.Text.Json.JsonSerializer.Serialize(
+                    dict,
+                    new System.Text.Json.JsonSerializerOptions
+                    {
+                        WriteIndented = true
+                    });
+
+                TxtStringFieldsOutput.Text = json;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al generar JSON:\n{ex.Message}",
+                                "Error",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error);
+            }
+        }
+        private void BtnCopyStringJson_Click(object sender, RoutedEventArgs e)
+        {
+            var text = TxtStringFieldsOutput.Text;
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                MessageBox.Show("No hay contenido para copiar.",
+                                "Aviso",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Information);
+                return;
+            }
+
+            Clipboard.SetText(text);
+
+            MessageBox.Show("JSON copiado al portapapeles.",
+                            "Éxito",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
+        }
+
+
+
+
     }
 }
